@@ -16,6 +16,7 @@
 
 #include <linux/notifier.h>
 
+#define OOM_EXT_MBYTE 1048576
 #define OOM_EXT_FLAG_MAXPATH 256
 #define OOM_EXT_WORK_QUEUE_NAME "oom_ext"
 
@@ -180,9 +181,9 @@ static void intrpt_routine(void *irrelevant)
         	    if (!oom_ext_have_emergency_buffer) {
         		printk (KERN_INFO "OOM_EXT: re-populating emergency buffer...");
 			if ( (oom_ext_emergency_buffer 
-					= (char*) vmalloc(bufsize*1048576)) ) {
+					= (char*) vmalloc(bufsize*OOM_EXT_MBYTE)) ) {
 			    for (oom_ext_i=0; 
-				    oom_ext_i< (bufsize*1048576); oom_ext_i++) {
+				    oom_ext_i< (bufsize*OOM_EXT_MBYTE); oom_ext_i++) {
 				oom_ext_emergency_buffer[oom_ext_i] = '0';
 		    	    }
 		    	    oom_ext_bufsize = bufsize;
@@ -203,9 +204,9 @@ static void intrpt_routine(void *irrelevant)
         	if (oom_ext_emergency_buffer) /* a useless check just in case */
         	    vfree (oom_ext_emergency_buffer);
 		if ( (oom_ext_emergency_buffer = 
-			(char*) vmalloc(bufsize*1048576)) ) {
+			(char*) vmalloc(bufsize*OOM_EXT_MBYTE)) ) {
 		    for (oom_ext_i=0; 
-			    oom_ext_i< (bufsize*1048576); oom_ext_i++) {
+			    oom_ext_i< (bufsize*OOM_EXT_MBYTE); oom_ext_i++) {
 			oom_ext_emergency_buffer[oom_ext_i] = '0';
 		    }
 		    oom_ext_bufsize = bufsize;
@@ -269,8 +270,8 @@ int init_module(void)
 	oom_ext_have_emergency_buffer = 0;
 	printk (KERN_INFO "OOM_EXT: populating emergency buffer...");
 	/* buffer size goes in megabytes */
-	if ( (oom_ext_emergency_buffer = (char*) vmalloc(bufsize*1048576)) ) {
-	    for (oom_ext_i=0; oom_ext_i< (bufsize*1048576); oom_ext_i++) {
+	if ( (oom_ext_emergency_buffer = (char*) vmalloc(bufsize*OOM_EXT_MBYTE)) ) {
+	    for (oom_ext_i=0; oom_ext_i< (bufsize*OOM_EXT_MBYTE); oom_ext_i++) {
 		oom_ext_emergency_buffer[oom_ext_i] = '0';
 	    }
 	    oom_ext_have_emergency_buffer = 1;
