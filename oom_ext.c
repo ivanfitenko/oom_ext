@@ -37,7 +37,7 @@ MODULE_DESCRIPTION("support custom actions on OOM condition");
 enum {OOM_EXT_VAL=1, OOM_EXT_OTHER};
 
 /* sysctl defaults */
-long gracetime = 300;   /* default time in oom before panic, sec */
+long gracetime = 0;   /* time in oom before panic, sec. 0 to disable */
 long resettime = 300; /* default time out of oom to consider it ended */
 int bufsize = 32; /* emergency buffer is 32M by default. 0 to disable */
 int crashflag = 1; /* set crash flag by default, remove if oom ended */
@@ -241,14 +241,19 @@ int oom_ext_event_handler (struct notifier_block *self,
 	    oom_ext_grace_start=oom_ext_now=jiffies;
 	else
 	    oom_ext_now=jiffies;
-	if (((long)oom_ext_now-(long)oom_ext_grace_start)/HZ > gracetime)
-	{
-	    /*
-	    * if we need to leave panic token on fs, don't panic
-	    * until we try to set it
-	    */
-	    if (!crashflag || file_done)
-		panic("I NEAR BIRD: too long in oom\n ");
+	/*
+	* when we're too long in OOM state, it could be useful to trigger
+	* kernel panic to reboot the system with sysctl kern.panic=1
+	*/
+	if (gracetime) {
+	    if (((long)oom_ext_now-(long)oom_ext_grace_start)/HZ > gracetime) {
+		/*
+		* if we need to leave panic token on fs, don't panic
+		* until we try to set it
+		*/
+		if (!crashflag || file_done)
+		    panic("I NEAR BIRD: too long in oom\n ");
+	    }
 	}
 	oom_ext_flag=1;
 	return 0;
